@@ -8,12 +8,12 @@ import { speak, isSpeaking } from '../utils/speech.js';
  *
  * Props:
  *   text    {string}  - Text to speak
- *   lang    {string}  - Language tag (default 'en-US')
+ *   lang    {string}  - Language tag (default 'en-IN')
  *   label   {string}  - Button label / emoji (default '🔊')
  *   size    {string}  - 'sm' | 'md' | 'lg'
  *   className {string}
  */
-function SpeakButton({ text, lang = 'en-US', label = '🔊', size = 'md', className = '' }) {
+function SpeakButton({ text, lang = 'en-IN', label = '🔊', size = 'md', className = '' }) {
   const [speaking, setSpeaking] = useState(false);
 
   const sizes = {

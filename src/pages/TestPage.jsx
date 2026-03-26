@@ -72,7 +72,7 @@ function TestPage() {
   const askQuestion = (correct) => {
     if (!correct) return;
     const phrase = buildQuestion(correct, selectedModuleId, language);
-    speak(phrase, { lang: language === 'mr' ? 'hi-IN' : 'en-US', rate: 0.82, pitch: 1.1 });
+    speak(phrase, { lang: language === 'mr' ? 'hi-IN' : 'en-IN', rate: 0.82, pitch: 1.1 });
   };
 
   const handleAnswer = (option) => {

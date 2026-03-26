@@ -29,7 +29,7 @@ function LearningHub() {
   const handleModuleClick = (mod) => {
     speak(
       language === 'mr' ? `${mod.marathiTitle} शिकूया!` : `Let's learn ${mod.title}!`,
-      { lang: language === 'mr' ? 'hi-IN' : 'en-US', rate: 0.85 }
+      { lang: language === 'mr' ? 'hi-IN' : 'en-IN', rate: 0.85 }
     );
     setTimeout(() => navigate(`/learn/${mod.id}`), 300);
   };

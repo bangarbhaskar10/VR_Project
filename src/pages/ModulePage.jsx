@@ -55,7 +55,7 @@ function ModulePage() {
       const hasMarathi = voices.some((v) => v.lang.startsWith('mr'));
       speak(item.marathiWord, { lang: hasMarathi ? 'mr-IN' : 'hi-IN', rate: 0.75, pitch: 1.1 });
     } else {
-      speak(buildPhrase(item, moduleId), { lang: 'en-US', rate: 0.82, pitch: 1.15 });
+      speak(buildPhrase(item, moduleId), { lang: 'en-IN', rate: 0.82, pitch: 1.15 });
     }
   }, [language, moduleId]);
 
