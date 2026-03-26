@@ -129,18 +129,15 @@ function WelcomePage() {
           />
           {/* Photo or fallback emoji */}
           {!photoError ? (
-            {/* Outer div handles rotation so Framer Motion scale doesn't override it */}
-            <div style={{ transform: 'rotate(180deg)', position: 'relative', zIndex: 1 }}>
-              <motion.img
-                src="/veera.jpg"
-                alt="Veera"
-                onError={() => setPhotoError(true)}
-                className="w-28 h-28 md:w-36 md:h-36 rounded-full object-cover shadow-2xl"
-                style={{ border: '4px solid rgba(255,255,255,0.9)', display: 'block' }}
-                animate={{ scale: [1, 1.04, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-              />
-            </div>
+            <motion.img
+              src="/veera.jpg"
+              alt="Veera"
+              onError={() => setPhotoError(true)}
+              className="relative w-28 h-28 md:w-36 md:h-36 rounded-full object-cover shadow-2xl"
+              style={{ border: '4px solid rgba(255,255,255,0.9)', zIndex: 1 }}
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            />
           ) : (
             <div
               className="relative w-28 h-28 md:w-36 md:h-36 rounded-full flex items-center justify-center shadow-2xl"
