@@ -1,49 +1,52 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
 
 /**
  * FloatingEmojis — Decorative background floating emoji characters.
- * Used on the Welcome page and module pages.
+ *
+ * Uses pure CSS @keyframes animations (no Framer Motion) so all animation
+ * runs on the GPU compositor thread — smooth even on low-end devices.
  *
  * Props:
  *   emojis  {string[]}  - Array of emoji characters to float
  *   count   {number}    - How many to show (default 12)
  */
+
+// Four CSS animation names to spread variety
+const FLOAT_ANIMS = ['float', 'floatReverse', 'floatWide', 'floatSway'];
+
 function FloatingEmojis({ emojis = ['⭐', '🌟', '✨', '💫', '🎉'], count = 12 }) {
   const items = useMemo(() =>
     Array.from({ length: count }, (_, i) => ({
       id: i,
       emoji: emojis[i % emojis.length],
-      x: 5 + Math.random() * 90,
-      y: 5 + Math.random() * 90,
-      size: 1.5 + Math.random() * 2.5,
-      duration: 2.5 + Math.random() * 3,
-      delay: Math.random() * 2,
+      x: 3 + Math.random() * 91,
+      y: 3 + Math.random() * 91,
+      size: 1.4 + Math.random() * 2,
+      // Duration 2.8–5.5 s, staggered negative delay so they're already mid-animation on load
+      duration: (2.8 + Math.random() * 2.7).toFixed(2),
+      delay: -(Math.random() * 4).toFixed(2),
+      anim: FLOAT_ANIMS[i % FLOAT_ANIMS.length],
     })),
-  [count]);
+  [count]);   // stable — only regenerates if count changes
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden>
       {items.map((item) => (
-        <motion.div
+        <div
           key={item.id}
-          className="absolute select-none"
           style={{
+            position: 'absolute',
             left: `${item.x}%`,
             top: `${item.y}%`,
             fontSize: `${item.size}rem`,
-            opacity: 0.25,
-          }}
-          animate={{ y: [0, -25, 0], rotate: [-5, 5, -5] }}
-          transition={{
-            duration: item.duration,
-            delay: item.delay,
-            repeat: Infinity,
-            ease: 'easeInOut',
+            opacity: 0.28,
+            // Promote each element to its own GPU layer for zero-jank animation
+            willChange: 'transform',
+            animation: `${item.anim} ${item.duration}s ease-in-out ${item.delay}s infinite`,
           }}
         >
           {item.emoji}
-        </motion.div>
+        </div>
       ))}
     </div>
   );

@@ -9,15 +9,15 @@ import MusicToggle from '../components/MusicToggle.jsx';
 // Decorative background characters for the welcome screen
 const BG_EMOJIS = ['🌟', '⭐', '🎈', '🦋', '🌈', '🌸', '🎉', '✨', '💫', '🎀', '🎵', '🌺'];
 
-// Fun characters that bob around the screen
+// Fun characters that bob around the screen — CSS animation = GPU smooth
 const CHARACTERS = [
-  { emoji: '🦄', x: 8,  y: 20,  delay: 0 },
-  { emoji: '🐬', x: 85, y: 18,  delay: 0.4 },
-  { emoji: '🐻', x: 5,  y: 70,  delay: 0.8 },
-  { emoji: '🦁', x: 88, y: 68,  delay: 0.2 },
-  { emoji: '🐸', x: 45, y: 88,  delay: 0.6 },
-  { emoji: '🦊', x: 20, y: 45,  delay: 1.0 },
-  { emoji: '🐨', x: 75, y: 45,  delay: 0.3 },
+  { emoji: '🦄', x: 8,  y: 20,  anim: 'floatSway',    dur: 3.2, delay: 0    },
+  { emoji: '🐬', x: 85, y: 18,  anim: 'floatReverse',  dur: 2.9, delay: -1.1 },
+  { emoji: '🐻', x: 5,  y: 70,  anim: 'float',         dur: 3.5, delay: -0.8 },
+  { emoji: '🦁', x: 88, y: 68,  anim: 'floatWide',     dur: 3.0, delay: -0.3 },
+  { emoji: '🐸', x: 45, y: 88,  anim: 'floatSway',     dur: 2.8, delay: -1.5 },
+  { emoji: '🦊', x: 20, y: 45,  anim: 'floatReverse',  dur: 3.3, delay: -0.6 },
+  { emoji: '🐨', x: 75, y: 45,  anim: 'float',         dur: 3.1, delay: -1.0 },
 ];
 
 function WelcomePage() {
@@ -68,17 +68,20 @@ function WelcomePage() {
              style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* Floating animated characters */}
+      {/* Floating animated characters — pure CSS for GPU-smooth animation */}
       {CHARACTERS.map((c) => (
-        <motion.div
+        <div
           key={c.emoji}
           className="absolute text-5xl md:text-6xl select-none pointer-events-none"
-          style={{ left: `${c.x}%`, top: `${c.y}%` }}
-          animate={{ y: [0, -20, 0], rotate: [-5, 5, -5] }}
-          transition={{ duration: 3 + c.delay, delay: c.delay, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            left: `${c.x}%`,
+            top: `${c.y}%`,
+            willChange: 'transform',
+            animation: `${c.anim} ${c.dur}s ease-in-out ${c.delay}s infinite`,
+          }}
         >
           {c.emoji}
-        </motion.div>
+        </div>
       ))}
 
       {/* MAIN CONTENT */}
@@ -135,6 +138,7 @@ function WelcomePage() {
                 border: '4px solid rgba(255,255,255,0.9)',
                 position: 'relative',
                 zIndex: 1,
+                transform: 'rotate(180deg)',  // fix upside-down EXIF orientation
               }}
               animate={{ scale: [1, 1.04, 1] }}
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
