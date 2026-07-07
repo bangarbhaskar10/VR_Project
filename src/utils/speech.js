@@ -187,7 +187,7 @@ export function speakReward(type) {
  * Speak a welcome greeting.
  */
 export function speakWelcome() {
-  speak('Hello Veera Bangar! Let\'s learn and have fun today!', {
+  speak('Hello Veera Pradnya Bhaskar Bangar! Let\'s learn and have fun today!', {
     lang: 'en-IN',
     rate: 0.8,
     pitch: 1.2,
