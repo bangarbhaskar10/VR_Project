@@ -4,12 +4,20 @@
  * Provides TTS (text-to-speech) for the learning app.
  * Handles voice selection, language switching, and utterance queuing.
  *
- * Voice preference: Indian English (en-IN) for a warm, familiar accent for Veera.
- * Falls back to any English voice if en-IN is unavailable.
+ * Voice preference: natural / neural voices for a warm, human-sounding instructor,
+ * with Indian English (en-IN) accent preferred for a familiar sound for Veera.
+ * Falls back gracefully through other high-quality English voices.
+ *
+ * The biggest quality win comes from picking a browser "Natural"/"Neural"/"Enhanced"
+ * voice (e.g. Microsoft Neerja/Aria/Ana, Google, Apple Enhanced) and keeping the
+ * pitch close to natural (≈1.0) instead of an artificial high pitch.
  */
 
 /** Currently active utterance — cancel before speaking new text */
 let currentUtterance = null;
+
+/** Cache the chosen voice per language so it stays consistent + avoids re-scan cost */
+const voiceCache = {};
 
 /**
  * Speak text aloud using the Web Speech API.
@@ -17,8 +25,8 @@ let currentUtterance = null;
  * @param {string} text        - Text to speak
  * @param {object} [options]   - Options
  * @param {string} [options.lang='en-IN']  - BCP-47 language tag
- * @param {number} [options.rate=0.85]     - Speed (0.1–10), slower for toddlers
- * @param {number} [options.pitch=1.2]     - Pitch (0–2), slightly higher for warmth
+ * @param {number} [options.rate=0.9]      - Speed (0.1–10), gentle for toddlers
+ * @param {number} [options.pitch=1.05]    - Pitch (0–2), near-natural for a human sound
  * @param {number} [options.volume=1]      - Volume (0–1)
  * @param {Function} [options.onEnd]       - Callback when speech ends
  */
@@ -30,21 +38,24 @@ export function speak(text, options = {}) {
 
   const {
     lang = 'en-IN',   // Indian English accent by default
-    rate = 0.85,
-    pitch = 1.2,
+    rate = 0.9,       // natural, unhurried pace
+    pitch = 1.05,     // near-natural pitch — warm but not squeaky
     volume = 1,
     onEnd,
   } = options;
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = lang;
-  utterance.rate = rate;
-  utterance.pitch = pitch;
+  // Clamp prosody to a human-sounding range no matter what a call site passes.
+  // High pitch (≈1.2–1.3) is what makes TTS sound robotic/squeaky; capping at
+  // 1.15 keeps reward voices a touch brighter than instruction, never cartoonish.
+  utterance.rate = Math.min(Math.max(rate, 0.7), 1.1);
+  utterance.pitch = Math.min(Math.max(pitch, 0.9), 1.15);
   utterance.volume = volume;
 
   if (onEnd) utterance.onend = onEnd;
 
-  // Try to pick a child-friendly / female voice
+  // Pick the most natural / human-sounding voice available
   utterance.voice = pickVoice(lang);
 
   currentUtterance = utterance;
@@ -69,16 +80,67 @@ export function isSpeaking() {
 }
 
 /**
- * Pick the best available voice for the given language.
- * Strongly prefers Indian English (en-IN) voices for a familiar accent.
- * Falls back gracefully through other English voices.
+ * Signals in a voice name that indicate a modern, human-sounding voice.
+ * Browsers label their high-quality neural voices with these words.
+ */
+const NATURAL_HINTS = ['natural', 'neural', 'online', 'enhanced', 'premium', 'siri'];
+
+/** Named voices known to sound especially warm & human, best first. */
+const PREFERRED_NAMES = [
+  'neerja',   // Microsoft Indian English female (Natural) — ideal for Veera
+  'aria',     // Microsoft US English female (Natural)
+  'jenny',    // Microsoft US English female (Natural)
+  'ana',      // Microsoft US English child voice (Natural)
+  'sonia',    // Microsoft UK English female (Natural)
+  'libby',    // Microsoft UK English female (Natural)
+  'ava',      // Apple US English female (Enhanced/Premium)
+  'samantha', // Apple US English female
+  'veena',    // macOS Indian English female
+  'lekha',    // Chrome Indian English female
+  'rishi',    // iOS/macOS Indian English
+];
+
+/**
+ * Score a voice for how human & appropriate it sounds for our app.
+ * Higher is better. Used to rank all candidate voices for a language.
  *
- * Voice priority order:
- *   1. Google हिन्दी / Rishi / Lekha / Veena  (Indian English on Chrome/Android)
- *   2. Any en-IN voice
- *   3. Any en-GB voice (closer accent to Indian English than en-US)
- *   4. Any English female voice
- *   5. Any English voice
+ * @param {SpeechSynthesisVoice} v
+ * @param {string} langCode - 'en', 'mr', 'hi'
+ */
+function scoreVoice(v, langCode) {
+  const name = v.name.toLowerCase();
+  const vlang = v.lang.toLowerCase();
+  let score = 0;
+
+  // Must roughly match the target language family
+  if (!vlang.startsWith(langCode)) return -1;
+
+  // Big boost for known warm/human named voices (earlier = better)
+  const nameIdx = PREFERRED_NAMES.findIndex((n) => name.includes(n));
+  if (nameIdx !== -1) score += 100 - nameIdx * 2;
+
+  // Boost for "natural / neural / enhanced" quality markers
+  if (NATURAL_HINTS.some((h) => name.includes(h))) score += 60;
+
+  // Online (cloud/neural) voices are typically far more natural than local ones
+  if (v.localService === false) score += 25;
+
+  // For English, prefer Indian accent, then UK, over US
+  if (langCode === 'en') {
+    if (vlang === 'en-in' || name.includes('india')) score += 40;
+    else if (vlang.startsWith('en-gb')) score += 15;
+  }
+
+  // Gentle nudge toward female voices (warmer for a toddler instructor)
+  if (name.includes('female') || name.includes('woman')) score += 5;
+
+  return score;
+}
+
+/**
+ * Pick the best available voice for the given language.
+ * Prefers modern natural/neural voices for a human sound, with Indian English
+ * accent preferred for English. Falls back gracefully to any matching voice.
  *
  * @param {string} lang - BCP-47 tag
  * @returns {SpeechSynthesisVoice|null}
@@ -89,48 +151,25 @@ function pickVoice(lang) {
 
   const langCode = lang.toLowerCase().split('-')[0]; // 'en', 'mr', 'hi'
 
-  // ── For English: apply Indian accent priority ──────────────────────────
-  if (langCode === 'en') {
-    // 1. Named Indian English voices (Chrome, Android, iOS)
-    const indianByName = voices.find((v) => {
-      const n = v.name.toLowerCase();
-      return (
-        n.includes('rishi')   ||   // iOS/macOS Indian English male
-        n.includes('lekha')   ||   // Chrome Indian English female
-        n.includes('veena')   ||   // macOS Indian English female
-        n.includes('moira')   ||   // macOS Irish (closer than US)
-        n.includes('google हिन्दी') ||
-        (n.includes('indian') && n.includes('english')) ||
-        (n.includes('en-in'))
-      );
-    });
-    if (indianByName) return indianByName;
+  // Return cached choice if we already resolved one for this language
+  if (voiceCache[langCode]) return voiceCache[langCode];
 
-    // 2. Any voice with en-IN locale
-    const enIN = voices.find((v) => v.lang.toLowerCase() === 'en-in');
-    if (enIN) return enIN;
+  // Rank all voices that match the language by human-ness score
+  const ranked = voices
+    .map((v) => ({ v, s: scoreVoice(v, langCode) }))
+    .filter((x) => x.s >= 0)
+    .sort((a, b) => b.s - a.s);
 
-    // 3. en-GB as closer-accent fallback
-    const enGB = voices.find((v) => v.lang.toLowerCase().startsWith('en-gb'));
-    if (enGB) return enGB;
+  let chosen = ranked.length ? ranked[0].v : null;
 
-    // 4. Any English female voice
-    const enAll = voices.filter((v) => v.lang.toLowerCase().startsWith('en'));
-    const female = enAll.find((v) => {
-      const n = v.name.toLowerCase();
-      return n.includes('female') || n.includes('zira') ||
-             n.includes('susan')  || n.includes('google uk english female');
-    });
-    if (female) return female;
-
-    return enAll[0] || voices[0];
+  // Marathi often has no dedicated voice — fall back to Hindi, then anything
+  if (!chosen && langCode === 'mr') {
+    chosen = voices.find((v) => v.lang.toLowerCase().startsWith('hi')) || null;
   }
+  if (!chosen) chosen = voices[0];
 
-  // ── Non-English (Marathi / Hindi) ─────────────────────────────────────
-  const matching = voices.filter((v) =>
-    v.lang.toLowerCase().startsWith(langCode)
-  );
-  return matching[0] || voices[0];
+  voiceCache[langCode] = chosen;
+  return chosen;
 }
 
 /**
@@ -145,6 +184,9 @@ export function initVoices() {
       return;
     }
     window.speechSynthesis.onvoiceschanged = () => {
+      // Voices arrived after first paint — clear any early cached choice so the
+      // best natural voice gets re-selected now that the full list is available.
+      Object.keys(voiceCache).forEach((k) => delete voiceCache[k]);
       resolve(window.speechSynthesis.getVoices());
     };
   });
@@ -162,9 +204,9 @@ export function speakItem(item, language = 'en') {
     const voices = window.speechSynthesis.getVoices();
     const hasMarathi = voices.some((v) => v.lang.startsWith('mr'));
     const lang = hasMarathi ? 'mr-IN' : 'hi-IN';
-    speak(`${item.marathiWord}`, { lang, rate: 0.75, pitch: 1.1 });
+    speak(`${item.marathiWord}`, { lang, rate: 0.82, pitch: 1.0 });
   } else {
-    speak(item.word, { lang: 'en-IN', rate: 0.8, pitch: 1.15 });
+    speak(item.word, { lang: 'en-IN', rate: 0.88, pitch: 1.05 });
   }
 }
 
@@ -180,7 +222,8 @@ export function speakReward(type) {
   };
   const list = messages[type] || messages.correct;
   const msg = list[Math.floor(Math.random() * list.length)];
-  speak(msg, { rate: 0.9, pitch: 1.3, volume: 1 });
+  // A little brighter & livelier for rewards, but still human — not squeaky.
+  speak(msg, { rate: 0.95, pitch: 1.12, volume: 1 });
 }
 
 /**
@@ -189,7 +232,7 @@ export function speakReward(type) {
 export function speakWelcome() {
   speak('Hello Veera! Let\'s learn and have fun today!', {
     lang: 'en-IN',
-    rate: 0.8,
-    pitch: 1.2,
+    rate: 0.9,
+    pitch: 1.05,
   });
 }
