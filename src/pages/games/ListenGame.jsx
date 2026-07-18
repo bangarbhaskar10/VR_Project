@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../../context/AppContext.jsx';
-import { ALL_MODULES, loadModuleData } from '../../data/modules.js';
+import { loadGamePool } from '../../data/modules.js';
 import { speak, stop } from '../../utils/speech.js';
 import { shuffle, pickRandom } from '../../utils/helpers.js';
-import Header from '../../components/Header.jsx';
 import StarBurst from '../../components/StarBurst.jsx';
 import MusicToggle from '../../components/MusicToggle.jsx';
 
 const TOTAL_QUESTIONS = 10;
+const GAME_COLOR = '#F59E0B';
 
 function ListenGame() {
   const navigate = useNavigate();
-  const { moduleId: paramModuleId } = useParams();
   const { language, awardStars, recordGameCompleted } = useApp();
 
-  const [selectedModuleId, setSelectedModuleId] = useState(paramModuleId || null);
-  const [moduleItems, setModuleItems] = useState([]);
+  const [pool, setPool] = useState([]);
   const [question, setQuestion] = useState(null);
   const [options, setOptions] = useState([]);
   const [answered, setAnswered] = useState(null);
@@ -26,46 +24,23 @@ function ListenGame() {
   const [questionIndex, setQuestionIndex] = useState(0);
   const [askedIds, setAskedIds] = useState([]);
   const [quizDone, setQuizDone] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!selectedModuleId) return;
-    setLoading(true);
-    stop();
-    loadModuleData(selectedModuleId).then((data) => {
-      setModuleItems(data);
-      setLoading(false);
-    });
-  }, [selectedModuleId]);
-
-  useEffect(() => {
-    if (moduleItems.length >= 2) startGame(moduleItems);
-  }, [moduleItems]);
-
-  const startGame = (items) => {
-    setScore(0);
-    setQuestionIndex(0);
-    setAskedIds([]);
-    setQuizDone(false);
-    pickNextQuestion(items, [], 0);
-  };
+  const [loading, setLoading] = useState(true);
 
   const speakWord = useCallback((item) => {
     if (!item) return;
     const word = language === 'mr' && item.marathiWord ? item.marathiWord : item.word;
-    speak(word, { lang: language === 'mr' ? 'hi-IN' : 'en-IN', rate: 0.78, pitch: 1.15 });
+    speak(word, { lang: language === 'mr' ? 'hi-IN' : 'en-IN', rate: 0.85, pitch: 1.05 });
   }, [language]);
 
-  const pickNextQuestion = useCallback((items, prevAskedIds, currentIndex) => {
-    const pool = items || moduleItems;
-    if (pool.length < 2) return;
+  const pickNextQuestion = useCallback((sourcePool, prevAskedIds, currentIndex) => {
+    if (sourcePool.length < 2) return;
     if (currentIndex >= TOTAL_QUESTIONS) { setQuizDone(true); return; }
 
-    let remaining = pool.filter((i) => !prevAskedIds.includes(i.id));
-    if (remaining.length === 0) remaining = pool;
+    let remaining = sourcePool.filter((i) => !prevAskedIds.includes(i.id));
+    if (remaining.length === 0) remaining = sourcePool;
 
     const correct = remaining[Math.floor(Math.random() * remaining.length)];
-    const wrongs = pickRandom(pool.filter((i) => i.id !== correct.id), Math.min(3, pool.length - 1));
+    const wrongs = pickRandom(sourcePool.filter((i) => i.id !== correct.id), 3);
 
     setQuestion(correct);
     setOptions(shuffle([correct, ...wrongs]));
@@ -73,7 +48,26 @@ function ListenGame() {
     setAskedIds([...prevAskedIds, correct.id]);
 
     setTimeout(() => speakWord(correct), 400);
-  }, [moduleItems, speakWord]);
+  }, [speakWord]);
+
+  const startGame = useCallback((sourcePool) => {
+    setScore(0);
+    setQuestionIndex(0);
+    setAskedIds([]);
+    setQuizDone(false);
+    pickNextQuestion(sourcePool, [], 0);
+  }, [pickNextQuestion]);
+
+  // Load the mixed pool once on mount
+  useEffect(() => {
+    stop();
+    loadGamePool().then((data) => {
+      setPool(data);
+      setLoading(false);
+      startGame(data);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAnswer = (option) => {
     if (answered) return;
@@ -90,10 +84,10 @@ function ListenGame() {
         'Superstar! Correct!',
         'Amazing! Well done!',
       ];
-      speak(cheers[Math.floor(Math.random() * cheers.length)], { rate: 0.88, pitch: 1.3 });
+      speak(cheers[Math.floor(Math.random() * cheers.length)], { rate: 0.95, pitch: 1.12 });
     } else {
       setAnswered('retry');
-      speak('Try again! Listen carefully!', { rate: 0.85, pitch: 1.2 });
+      speak('Try again! Listen carefully!', { rate: 0.9, pitch: 1.05 });
       setTimeout(() => {
         setAnswered(null);
         speakWord(question);
@@ -105,56 +99,13 @@ function ListenGame() {
     setShowBurst(false);
     const nextIndex = questionIndex + 1;
     setQuestionIndex(nextIndex);
-    setTimeout(() => pickNextQuestion(moduleItems, askedIds, nextIndex), 300);
+    setTimeout(() => pickNextQuestion(pool, askedIds, nextIndex), 300);
   };
-
-  // Module selector
-  if (!selectedModuleId) {
-    return (
-      <div className="min-h-screen flex flex-col"
-           style={{ background: 'linear-gradient(135deg, #1a0533, #2d1b69, #1e3a5f)' }}>
-        <Header title="👂 Listening Game" showBack backTo="/games" />
-        <main className="flex-1 flex flex-col items-center px-4 py-6">
-          <motion.p initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                    className="text-white font-bold text-lg text-center mb-6">
-            Choose a topic to listen!
-          </motion.p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 w-full max-w-2xl">
-            {ALL_MODULES.map((mod, i) => (
-              <motion.button
-                key={mod.id}
-                initial={{ opacity: 0, scale: 0.7 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.04, type: 'spring', stiffness: 250 }}
-                whileTap={{ scale: 0.9 }}
-                whileHover={{ scale: 1.05, y: -4 }}
-                onClick={() => {
-                  speak(`Listen and find the ${mod.title}!`, { rate: 0.85 });
-                  setSelectedModuleId(mod.id);
-                }}
-                className="module-card text-white py-5"
-                style={{
-                  background: `linear-gradient(135deg, ${mod.color}ee, ${mod.color}99)`,
-                  boxShadow: `0 6px 20px ${mod.color}44`,
-                }}
-              >
-                <span className="text-4xl mb-2 block">{mod.emoji}</span>
-                <span className="font-black text-sm">{mod.title}</span>
-              </motion.button>
-            ))}
-          </div>
-        </main>
-        <MusicToggle />
-      </div>
-    );
-  }
-
-  const mod = ALL_MODULES.find((m) => m.id === selectedModuleId);
 
   if (loading || (!question && !quizDone)) {
     return (
       <div className="min-h-screen flex items-center justify-center"
-           style={{ background: `linear-gradient(135deg, ${mod?.color || '#F59E0B'}, #1a0533)` }}>
+           style={{ background: `linear-gradient(135deg, ${GAME_COLOR}, #1a0533)` }}>
         <motion.div animate={{ rotate: [0, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 0.6 }}
                     className="text-7xl">👂</motion.div>
       </div>
@@ -171,12 +122,12 @@ function ListenGame() {
       ? 'Great listening! Well done!'
       : 'Keep practising! You are getting better!';
 
-    speak(msg, { rate: 0.82, pitch: 1.2 });
+    speak(msg, { rate: 0.9, pitch: 1.05 });
     recordGameCompleted('listen');
 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 gap-6"
-           style={{ background: `linear-gradient(160deg, ${mod?.color}cc, #1a0533)` }}>
+           style={{ background: `linear-gradient(160deg, ${GAME_COLOR}cc, #1a0533)` }}>
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                     transition={{ type: 'spring', stiffness: 200 }} className="text-9xl">
           {emoji}
@@ -190,15 +141,10 @@ function ListenGame() {
           <p className="text-white/80 mt-3">{msg}</p>
         </motion.div>
         <div className="flex flex-wrap gap-4 justify-center">
-          <motion.button whileTap={{ scale: 0.9 }} onClick={() => startGame(moduleItems)}
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => startGame(pool)}
                          className="btn-toddler text-white"
                          style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}>
             🔄 Play Again
-          </motion.button>
-          <motion.button whileTap={{ scale: 0.9 }} onClick={() => { stop(); setSelectedModuleId(null); setQuizDone(false); }}
-                         className="btn-toddler text-white"
-                         style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}>
-            🎯 New Topic
           </motion.button>
           <motion.button whileTap={{ scale: 0.9 }} onClick={() => { stop(); navigate('/games'); }}
                          className="btn-toddler text-white"
@@ -212,14 +158,14 @@ function ListenGame() {
 
   return (
     <div className="min-h-screen flex flex-col"
-         style={{ background: `linear-gradient(160deg, ${mod?.color}cc 0%, #1a0533 55%, #0f172a 100%)` }}>
+         style={{ background: `linear-gradient(160deg, ${GAME_COLOR}cc 0%, #1a0533 55%, #0f172a 100%)` }}>
       <div className="flex items-center justify-between px-4 py-3 bg-white/20 backdrop-blur-sm sticky top-0 z-50 shadow-lg">
-        <motion.button whileTap={{ scale: 0.85 }} onClick={() => { stop(); setSelectedModuleId(null); }}
+        <motion.button whileTap={{ scale: 0.85 }} onClick={() => { stop(); navigate('/games'); }}
                        className="w-12 h-12 rounded-2xl bg-white/30 flex items-center justify-center text-2xl shadow-md border-2 border-white/40">
           ⬅️
         </motion.button>
         <h1 className="text-white font-black text-lg text-center flex-1 mx-2">
-          👂 {language === 'mr' ? mod?.marathiTitle : mod?.title}
+          👂 {language === 'mr' ? 'ऐकण्याचा खेळ' : 'Listening Game'}
         </h1>
         <div className="bg-white/20 rounded-2xl px-3 py-1.5 text-white font-black text-sm">
           {questionIndex + 1}/{TOTAL_QUESTIONS}

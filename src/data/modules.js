@@ -225,6 +225,32 @@ export function getModule(id) {
 }
 
 /**
+ * Topics that work well as a mixed pool for the emoji-based games
+ * (Memory & Listening). These are concrete, emoji-distinct nouns/feelings.
+ * Deliberately excludes Numbers, Alphabets, Shapes, Opposites, Days, Months —
+ * those are abstract/sequential and don't suit random emoji matching.
+ */
+export const GAME_TOPIC_IDS = [
+  'animals', 'birds', 'fruits', 'vegetables', 'insects', 'space',
+  'flowers', 'vehicles', 'food', 'emotions', 'colors', 'weather',
+  'clothes', 'community', 'bodyparts', 'family',
+];
+
+/**
+ * Load a single flattened, mixed pool of items drawn from all game topics.
+ * Each item id is namespaced by module (e.g. "animals:cat") so ids stay unique
+ * across topics, and tagged with `__module` for any per-topic rendering.
+ *
+ * @returns {Promise<Array>} mixed pool of items
+ */
+export async function loadGamePool() {
+  const results = await Promise.all(GAME_TOPIC_IDS.map((id) => loadModuleData(id)));
+  return results.flatMap((items, i) =>
+    items.map((it) => ({ ...it, id: `${GAME_TOPIC_IDS[i]}:${it.id}`, __module: GAME_TOPIC_IDS[i] }))
+  );
+}
+
+/**
  * Dynamically import module data by id.
  * Returns the items array for that module.
  */

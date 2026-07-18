@@ -40,9 +40,7 @@ function App() {
           {/* Games hub and individual games */}
           <Route path="/games" element={<GamesHub />} />
           <Route path="/games/memory" element={<MemoryGame />} />
-          <Route path="/games/memory/:moduleId" element={<MemoryGame />} />
           <Route path="/games/listen" element={<ListenGame />} />
-          <Route path="/games/listen/:moduleId" element={<ListenGame />} />
           <Route path="/games/count" element={<CountGame />} />
           <Route path="/games/trace" element={<TraceGame />} />
 
