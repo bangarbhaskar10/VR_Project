@@ -76,7 +76,7 @@ D:\VR_Project\
 
 ### 🏠 Welcome Page
 - Animated welcome screen with floating emojis
-- Auto-plays voice greeting: *"Hello Veera Bangar, let's learn and have fun!"*
+- Auto-plays voice greeting: *"Hello Veera, let's learn and have fun!"*
 - Daily streak tracking 🔥
 - Background music toggle (Web Audio API — no files needed!)
 

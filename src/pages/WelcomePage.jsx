@@ -232,30 +232,43 @@ function WelcomePage() {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              className="flex flex-col sm:flex-row gap-4 w-full max-w-md"
+              className="flex flex-col gap-3 w-full max-w-md"
             >
-              {/* Start Learning */}
-              <motion.button
-                whileTap={{ scale: 0.92 }}
-                whileHover={{ scale: 1.04, y: -3 }}
-                onClick={() => navigate('/learn')}
-                className="flex-1 btn-toddler text-white shadow-2xl border-b-4 border-purple-700"
-                style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}
-              >
-                <span className="block text-4xl mb-1">📚</span>
-                <span>Start Learning</span>
-              </motion.button>
+              {/* Top row: Learn + Test */}
+              <div className="flex gap-3">
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  whileHover={{ scale: 1.04, y: -3 }}
+                  onClick={() => navigate('/learn')}
+                  className="flex-1 btn-toddler text-white shadow-2xl border-b-4 border-purple-700"
+                  style={{ background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}
+                >
+                  <span className="block text-4xl mb-1">📚</span>
+                  <span>Start Learning</span>
+                </motion.button>
 
-              {/* Take a Test */}
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  whileHover={{ scale: 1.04, y: -3 }}
+                  onClick={() => navigate('/test')}
+                  className="flex-1 btn-toddler text-white shadow-2xl border-b-4 border-pink-700"
+                  style={{ background: 'linear-gradient(135deg, #f472b6, #ec4899)' }}
+                >
+                  <span className="block text-4xl mb-1">🧠</span>
+                  <span>Take a Test</span>
+                </motion.button>
+              </div>
+
+              {/* Games button — full width */}
               <motion.button
                 whileTap={{ scale: 0.92 }}
-                whileHover={{ scale: 1.04, y: -3 }}
-                onClick={() => navigate('/test')}
-                className="flex-1 btn-toddler text-white shadow-2xl border-b-4 border-pink-700"
-                style={{ background: 'linear-gradient(135deg, #f472b6, #ec4899)' }}
+                whileHover={{ scale: 1.02, y: -3 }}
+                onClick={() => navigate('/games')}
+                className="w-full btn-toddler text-white shadow-2xl border-b-4 border-green-700"
+                style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}
               >
-                <span className="block text-4xl mb-1">🧠</span>
-                <span>Take a Test</span>
+                <span className="block text-4xl mb-1">🎮</span>
+                <span>Play Games</span>
               </motion.button>
             </motion.div>
           )}

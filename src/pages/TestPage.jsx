@@ -15,7 +15,7 @@ const TOTAL_QUESTIONS = 10;
 function TestPage() {
   const navigate = useNavigate();
   const { moduleId: paramModuleId } = useParams();
-  const { language, awardStars } = useApp();
+  const { language, awardStars, recordPerfectQuiz } = useApp();
 
   const [selectedModuleId, setSelectedModuleId] = useState(paramModuleId || null);
   const [moduleItems, setModuleItems] = useState([]);
@@ -44,6 +44,10 @@ function TestPage() {
   useEffect(() => {
     if (moduleItems.length >= 2) startQuiz(moduleItems);
   }, [moduleItems]);
+
+  useEffect(() => {
+    if (quizDone && score === TOTAL_QUESTIONS) recordPerfectQuiz();
+  }, [quizDone]);
 
   // ── Start fresh quiz ────────────────────────────────────────────────────
   const startQuiz = (items) => {
