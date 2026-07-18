@@ -6,6 +6,11 @@ import LearningHub from './pages/LearningHub.jsx';
 import ModulePage from './pages/ModulePage.jsx';
 import TestPage from './pages/TestPage.jsx';
 import ParentDashboard from './pages/ParentDashboard.jsx';
+import GamesHub from './pages/GamesHub.jsx';
+import MemoryGame from './pages/games/MemoryGame.jsx';
+import ListenGame from './pages/games/ListenGame.jsx';
+import CountGame from './pages/games/CountGame.jsx';
+import TraceGame from './pages/games/TraceGame.jsx';
 
 /**
  * Root application component.
@@ -31,6 +36,15 @@ function App() {
 
           {/* Parent dashboard */}
           <Route path="/parent" element={<ParentDashboard />} />
+
+          {/* Games hub and individual games */}
+          <Route path="/games" element={<GamesHub />} />
+          <Route path="/games/memory" element={<MemoryGame />} />
+          <Route path="/games/memory/:moduleId" element={<MemoryGame />} />
+          <Route path="/games/listen" element={<ListenGame />} />
+          <Route path="/games/listen/:moduleId" element={<ListenGame />} />
+          <Route path="/games/count" element={<CountGame />} />
+          <Route path="/games/trace" element={<TraceGame />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -148,6 +148,44 @@ export const ALL_MODULES = [
     totalItems: 12,
   },
 
+  // ── New Topics ────────────────────────────────────────────────
+  {
+    id: 'space',
+    title: 'Space',
+    marathiTitle: 'अंतराळ',
+    emoji: '🚀',
+    color: '#7C3AED',
+    description: 'Explore outer space!',
+    totalItems: 10,
+  },
+  {
+    id: 'flowers',
+    title: 'Flowers & Plants',
+    marathiTitle: 'फुले आणि झाडे',
+    emoji: '🌸',
+    color: '#EC4899',
+    description: 'Beautiful flowers!',
+    totalItems: 10,
+  },
+  {
+    id: 'insects',
+    title: 'Insects',
+    marathiTitle: 'कीटक',
+    emoji: '🐝',
+    color: '#F59E0B',
+    description: 'Tiny little insects!',
+    totalItems: 10,
+  },
+  {
+    id: 'emotions',
+    title: 'Emotions',
+    marathiTitle: 'भावना',
+    emoji: '😊',
+    color: '#EF4444',
+    description: 'How do you feel?',
+    totalItems: 8,
+  },
+
   // ── Language ──────────────────────────────────────────────────
   {
     id: 'clothes',
@@ -210,6 +248,10 @@ export async function loadModuleData(id) {
     case 'weather':    return (await import('./weather.js')).weather;
     case 'community':  return (await import('./community.js')).community;
     case 'opposites':  return (await import('./opposites.js')).opposites;
+    case 'space':      return (await import('./space.js')).space;
+    case 'flowers':    return (await import('./flowers.js')).flowers;
+    case 'insects':    return (await import('./insects.js')).insects;
+    case 'emotions':   return (await import('./emotions.js')).emotions;
     default:           return [];
   }
 }

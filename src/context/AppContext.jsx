@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { loadProgress, saveProgress, loadPreferences, savePreferences } from '../utils/storage.js';
+import { BADGES } from '../data/badges.js';
 
 /**
  * Global application context.
@@ -23,12 +24,18 @@ export function AppProvider({ children }) {
   // Daily streak
   const [streak, setStreak] = useState({ count: 0, lastDate: null });
 
+  // Achievements
+  const [badges, setBadges] = useState([]);
+  const [gameStats, setGameStats] = useState({ memory: 0, listen: 0, count: 0, trace: 0, perfectQuizzes: 0 });
+
   // Load saved preferences and progress on mount
   useEffect(() => {
     const prefs = loadPreferences();
     if (prefs.language) setLanguage(prefs.language);
     if (typeof prefs.totalStars === 'number') setTotalStars(prefs.totalStars);
     if (prefs.streak) setStreak(prefs.streak);
+    if (prefs.badges) setBadges(prefs.badges);
+    if (prefs.gameStats) setGameStats(prefs.gameStats);
 
     const savedProgress = loadProgress();
     if (savedProgress) setProgress(savedProgress);
@@ -39,8 +46,27 @@ export function AppProvider({ children }) {
 
   // Persist preferences when they change
   useEffect(() => {
-    savePreferences({ language, totalStars, streak });
-  }, [language, totalStars, streak]);
+    savePreferences({ language, totalStars, streak, badges, gameStats });
+  }, [language, totalStars, streak, badges, gameStats]);
+
+  // Auto-check and unlock badges whenever relevant state changes
+  useEffect(() => {
+    const modulesCompleted = Object.values(progress).filter((m) => m?.completed).length;
+    const ctx = {
+      totalStars,
+      modulesCompleted,
+      streak: streak.count,
+      memoryGames: gameStats.memory,
+      listenGames: gameStats.listen,
+      countGames: gameStats.count,
+      traceGames: gameStats.trace,
+      perfectQuizzes: gameStats.perfectQuizzes,
+    };
+    setBadges((prev) => {
+      const toAdd = BADGES.filter((b) => !prev.includes(b.id) && b.condition(ctx)).map((b) => b.id);
+      return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+    });
+  }, [totalStars, progress, streak.count, gameStats]);
 
   // Persist progress when it changes
   useEffect(() => {
@@ -121,6 +147,14 @@ export function AppProvider({ children }) {
     setMusicOn((m) => !m);
   }, []);
 
+  const recordGameCompleted = useCallback((type) => {
+    setGameStats((prev) => ({ ...prev, [type]: (prev[type] || 0) + 1 }));
+  }, []);
+
+  const recordPerfectQuiz = useCallback(() => {
+    setGameStats((prev) => ({ ...prev, perfectQuizzes: (prev.perfectQuizzes || 0) + 1 }));
+  }, []);
+
   const value = {
     language,
     setLanguage,
@@ -134,6 +168,10 @@ export function AppProvider({ children }) {
     markModuleComplete,
     getModuleProgress,
     streak,
+    badges,
+    gameStats,
+    recordGameCompleted,
+    recordPerfectQuiz,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

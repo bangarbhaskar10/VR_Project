@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApp } from '../context/AppContext.jsx';
 import { ALL_MODULES } from '../data/modules.js';
+import { BADGES } from '../data/badges.js';
 import { clearAllData } from '../utils/storage.js';
 import { formatDate } from '../utils/helpers.js';
 
@@ -12,7 +13,7 @@ import { formatDate } from '../utils/helpers.js';
  */
 function ParentDashboard() {
   const navigate = useNavigate();
-  const { totalStars, streak, progress, language, toggleLanguage } = useApp();
+  const { totalStars, streak, progress, language, toggleLanguage, badges, gameStats } = useApp();
   const [confirmReset, setConfirmReset] = useState(false);
   const [photoError, setPhotoError] = useState(false);
 
@@ -181,6 +182,59 @@ function ParentDashboard() {
                 </motion.div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Achievements & Badges */}
+        <div>
+          <h3 className="text-white/70 font-bold text-sm uppercase tracking-wider mb-3 px-1">
+            Achievements — {badges.length}/{BADGES.length} unlocked
+          </h3>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+            {BADGES.map((badge) => {
+              const earned = badges.includes(badge.id);
+              return (
+                <motion.div
+                  key={badge.id}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="rounded-2xl p-3 text-center border flex flex-col items-center gap-1"
+                  style={{
+                    background: earned ? 'rgba(234,179,8,0.15)' : 'rgba(255,255,255,0.03)',
+                    borderColor: earned ? 'rgba(234,179,8,0.5)' : 'rgba(255,255,255,0.08)',
+                  }}
+                >
+                  <span className="text-2xl" style={{ filter: earned ? 'none' : 'grayscale(1) opacity(0.3)' }}>
+                    {badge.emoji}
+                  </span>
+                  <span className="text-white text-[10px] font-black leading-tight text-center"
+                        style={{ opacity: earned ? 1 : 0.3 }}>
+                    {badge.title}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Game Stats */}
+        <div className="rounded-2xl p-4 bg-white/5 border border-white/10">
+          <h3 className="text-white/70 font-bold text-sm uppercase tracking-wider mb-3">Games Played</h3>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { label: 'Memory',   value: gameStats.memory,       emoji: '🃏' },
+              { label: 'Listening',value: gameStats.listen,       emoji: '👂' },
+              { label: 'Counting', value: gameStats.count,        emoji: '🔢' },
+              { label: 'Tracing',  value: gameStats.trace,        emoji: '✏️' },
+            ].map((g) => (
+              <div key={g.label} className="rounded-xl p-3 bg-white/5 flex items-center gap-2">
+                <span className="text-xl">{g.emoji}</span>
+                <div>
+                  <div className="text-white font-black text-lg leading-none">{g.value || 0}</div>
+                  <div className="text-white/50 text-xs">{g.label}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
