@@ -104,21 +104,11 @@ function TestPage() {
       awardStars(1);
       setShowBurst(true);
 
-      const cheers = [
-        'Yay! That is correct! You are so smart, Veera!',
-        'Wonderful! Great job!',
-        'Superstar! That is right!',
-        'Amazing! You did it!',
-        'Hooray! Correct answer!',
-      ];
+      const cheers = ['Well done!', 'Correct!', 'That is right!', 'Yes!', 'Good one!'];
       speak(cheers[Math.floor(Math.random() * cheers.length)], { rate: 0.88, pitch: 1.3 });
     } else {
       setAnswered('retry');
-      const encouragements = [
-        'Try again! You can do it!',
-        'Almost! Try once more!',
-        'Keep trying! You are great!',
-      ];
+      const encouragements = ['Try again!', 'Almost!', 'Think carefully!'];
       speak(encouragements[Math.floor(Math.random() * encouragements.length)], { rate: 0.85, pitch: 1.2 });
       setTimeout(() => {
         setAnswered(null);

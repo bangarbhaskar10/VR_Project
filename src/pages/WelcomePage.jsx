@@ -270,6 +270,18 @@ function WelcomePage() {
                 <span className="block text-4xl mb-1">🎮</span>
                 <span>Play Games</span>
               </motion.button>
+
+              {/* Worksheets button — full width */}
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                whileHover={{ scale: 1.02, y: -3 }}
+                onClick={() => navigate('/worksheets')}
+                className="w-full btn-toddler text-white shadow-2xl border-b-4 border-orange-700"
+                style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}
+              >
+                <span className="block text-4xl mb-1">📋</span>
+                <span>Worksheets</span>
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>

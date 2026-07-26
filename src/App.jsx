@@ -11,6 +11,8 @@ import MemoryGame from './pages/games/MemoryGame.jsx';
 import ListenGame from './pages/games/ListenGame.jsx';
 import CountGame from './pages/games/CountGame.jsx';
 import TraceGame from './pages/games/TraceGame.jsx';
+import WorksheetHub from './pages/WorksheetHub.jsx';
+import WorksheetPage from './pages/WorksheetPage.jsx';
 
 /**
  * Root application component.
@@ -45,6 +47,10 @@ function App() {
           <Route path="/games/listen/:moduleId" element={<ListenGame />} />
           <Route path="/games/count" element={<CountGame />} />
           <Route path="/games/trace" element={<TraceGame />} />
+
+          {/* Worksheets */}
+          <Route path="/worksheets" element={<WorksheetHub />} />
+          <Route path="/worksheets/:sheetId" element={<WorksheetPage />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
