@@ -282,6 +282,18 @@ function WelcomePage() {
                 <span className="block text-4xl mb-1">📋</span>
                 <span>Worksheets</span>
               </motion.button>
+
+              {/* Exam Prep button — full width */}
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                whileHover={{ scale: 1.02, y: -3 }}
+                onClick={() => navigate('/exam')}
+                className="w-full btn-toddler text-white shadow-2xl border-b-4 border-red-700"
+                style={{ background: 'linear-gradient(135deg, #ef4444, #b91c1c)' }}
+              >
+                <span className="block text-4xl mb-1">🎯</span>
+                <span>Exam Prep</span>
+              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>

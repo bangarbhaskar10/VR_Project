@@ -13,6 +13,8 @@ import CountGame from './pages/games/CountGame.jsx';
 import TraceGame from './pages/games/TraceGame.jsx';
 import WorksheetHub from './pages/WorksheetHub.jsx';
 import WorksheetPage from './pages/WorksheetPage.jsx';
+import ExamHub from './pages/ExamHub.jsx';
+import ExamPractice from './pages/ExamPractice.jsx';
 
 /**
  * Root application component.
@@ -51,6 +53,10 @@ function App() {
           {/* Worksheets */}
           <Route path="/worksheets" element={<WorksheetHub />} />
           <Route path="/worksheets/:sheetId" element={<WorksheetPage />} />
+
+          {/* Exam Prep */}
+          <Route path="/exam" element={<ExamHub />} />
+          <Route path="/exam/:sectionId" element={<ExamPractice />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
